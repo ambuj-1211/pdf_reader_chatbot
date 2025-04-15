@@ -14,11 +14,9 @@ from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from PyPDF2 import PdfReader
 
 load_dotenv()
-os.environ["LANGSMITH_TRACING"]="true"
-os.environ["LANGSMITH_ENDPOINT"]=os.getenv("LANGSMITH_ENDPOINT")
-os.environ["LANGSMITH_API_KEY"]=os.getenv("LANGSMITH_API_KEY")
-os.environ["LANGSMITH_PROJECT"]="Pdf_Chatbot"
-
+# for running ollama through internal docker container#http://host.docker.internal:11434
+model_name = os.getenv("LLM")
+ollama_base_url = os.getenv("OLLAMA_BASE_URL")
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -43,7 +41,7 @@ def main():
             
         text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
         chunks = text_splitter.split_text(text=text)
-        db = FAISS.from_texts(chunks, OllamaEmbeddings(model="gemma2:2b"))
+        db = FAISS.from_texts(chunks, OllamaEmbeddings(base_url=ollama_base_url, model=model_name))
         
         prompt = ChatPromptTemplate.from_template("""
         Answer the following question based only on the provided context.
@@ -53,7 +51,7 @@ def main():
         </context>
         Question: {input}""")
 
-        llm = OllamaLLM(model="gemma2:2b")
+        llm = OllamaLLM(temperature=0, base_url= ollama_base_url,model=model_name)
         document_chain=create_stuff_documents_chain(llm,prompt)
         retriever = VectorStoreRetriever(vectorstore=db)
         retrieval_chain=create_retrieval_chain(retriever,document_chain)
