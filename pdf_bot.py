@@ -10,13 +10,15 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.vectorstores import VectorStoreRetriever
-from langchain_ollama import OllamaEmbeddings, OllamaLLM
+from langchain_google_genai import (ChatGoogleGenerativeAI,
+                                    GoogleGenerativeAIEmbeddings)
+# from langchain_ollama import OllamaEmbeddings, OllamaLLM
 from PyPDF2 import PdfReader
 
 load_dotenv()
-# for running ollama through internal docker container#http://host.docker.internal:11434
-model_name = os.getenv("LLM")
-ollama_base_url = os.getenv("OLLAMA_BASE_URL")
+# # for running ollama through internal docker container#http://host.docker.internal:11434
+# model_name = os.getenv("LLM")
+# ollama_base_url = os.getenv("OLLAMA_BASE_URL")
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -41,7 +43,7 @@ def main():
             
         text_splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
         chunks = text_splitter.split_text(text=text)
-        db = FAISS.from_texts(chunks, OllamaEmbeddings(base_url=ollama_base_url, model=model_name))
+        db = FAISS.from_texts(chunks, GoogleGenerativeAIEmbeddings(model="models/embedding-001"))
         
         prompt = ChatPromptTemplate.from_template("""
         Answer the following question based only on the provided context.
@@ -51,7 +53,11 @@ def main():
         </context>
         Question: {input}""")
 
-        llm = OllamaLLM(temperature=0, base_url= ollama_base_url,model=model_name)
+        # llm = OllamaLLM(temperature=0, base_url= ollama_base_url,model=model_name)
+        llm = ChatGoogleGenerativeAI(
+            model=os.getenv("LLM"),
+            temperature=0.0,
+        )
         document_chain=create_stuff_documents_chain(llm,prompt)
         retriever = VectorStoreRetriever(vectorstore=db)
         retrieval_chain=create_retrieval_chain(retriever,document_chain)

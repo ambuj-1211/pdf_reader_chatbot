@@ -16,7 +16,6 @@ services:
         timeout: 10s
         retries: 10
       restart: unless-stopped
-
   pdf_bot:
     build:
       context: .
@@ -32,3 +31,53 @@ networks:
 
 volumes:
   ollama_data:
+
+# version: '3.8'
+
+# services:
+#   ollama:
+#       image: ollama/ollama:latest
+#       container_name: ollama
+#       ports:
+#         - "11434:11434"
+#       volumes:
+#         - ollama_data:/root/.ollama
+#       networks:
+#         - net
+#       healthcheck:
+#         test: ["CMD", "curl", "-f", "http://localhost:11434"]
+#         interval: 5s
+#         timeout: 10s
+#         retries: 10
+#       restart: unless-stopped
+
+#   pull-model:
+#     # image: genai-stack/pull-model:latest
+#     build:
+#       context: .
+#       dockerfile: pull_model.Dockerfile
+#     environment:
+#       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL-http://ollama:11434}
+#       - LLM=${LLM-gemma2:2b}
+#     networks:
+#       - net
+#     tty: true
+
+#   pdf_bot:
+#     build:
+#       context: .
+#       dockerfile: pdf_bot.Dockerfile
+#     networks:
+#       - net
+#     # depends_on:
+#     #   pull-model:
+#     #     condition: service_completed_successfully
+#     ports:
+#       - "8080:8080"
+#     restart: unless-stopped
+
+# networks:
+#   net:
+
+# volumes:
+#   ollama_data:
